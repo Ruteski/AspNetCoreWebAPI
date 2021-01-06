@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartSchool.API.Data;
+using SmartSchool.API.Dtos;
 using SmartSchool.API.Models;
 using System;
 using System.Collections.Generic;
@@ -25,23 +26,25 @@ namespace SmartSchool.API.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            var result = _repo.GetAllAlunos(true);
-            return Ok(result);
-        }
+            var alunos = _repo.GetAllAlunos(true);
+            var alunosRetorno = new List<AlunoDto>();
 
-        // api/aluno/1
-        /*[HttpGet("{id:int}")]
-        public IActionResult GetById(int id)
-        {
-            var aluno = Alunos.FirstOrDefault(a => a.Id == id);
-
-            if (aluno == null)
+            foreach (var aluno in alunos)
             {
-                return BadRequest("O Aluno nao foi encontrado");
+                alunosRetorno.Add(new AlunoDto()
+                {
+                    Id = aluno.Id,
+                    Matricula = aluno.Matricula,
+                    Nome = $"{aluno.Nome} {aluno.Sobrenome}",
+                    Telefone = aluno.Telefone,
+                    DataNasc = aluno.DataNasc,
+                    DataIni = aluno.DataIni,
+                    Ativo = aluno.Ativo
+                });
             }
 
-            return Ok(aluno);
-        }*/
+            return Ok(alunosRetorno);
+        }
 
         // api/aluno/1
         [HttpGet("{id}")]
@@ -57,40 +60,6 @@ namespace SmartSchool.API.Controllers
             return Ok(aluno);
         }
 
-        // api/aluno/byid/1
-        /*[HttpGet("byid/{id}")]
-        public IActionResult GetById(int id)
-        {
-            var aluno = Alunos.FirstOrDefault(a => a.Id == id);
-
-            if (aluno == null)
-            {
-                return BadRequest("O Aluno nao foi encontrado");
-            }
-
-            return Ok(aluno);
-        }*/
-
-        // GET: api/<AlunosController>
-        /*[HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }*/
-
-        // GET api/<AlunosController>/5
-        /*        [HttpGet("{id}")]
-                public string Get(int id)
-                {
-                    return "value";
-                }*/
-
-        // POST api/<AlunosController>
-        /*[HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }*/
-
         [HttpPost]
         public IActionResult Post(Aluno aluno)
         {
@@ -104,12 +73,7 @@ namespace SmartSchool.API.Controllers
             return BadRequest("Aluno nao cadastrado");
         }
 
-        // PUT api/<AlunosController>/5
-        /*[HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }*/
-
+        // api/aluno/1
         [HttpPut("{id}")]
         public IActionResult Put(int id, Aluno aluno)
         {
@@ -130,12 +94,7 @@ namespace SmartSchool.API.Controllers
             return BadRequest("Aluno nao atualizado");
         }
 
-        // DELETE api/<AlunosController>/5
-        /*[HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }*/
-
+        // api/aluno/1
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
