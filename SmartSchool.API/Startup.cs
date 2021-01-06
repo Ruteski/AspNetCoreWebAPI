@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -31,20 +32,17 @@ namespace SmartSchool.API
                 context => context.UseSqlite(Configuration.GetConnectionString("Default"))
             );
 
-            // criar o servico quando é requisitado a primeira vez e depois reutiliza o servico sempre que for preciso
-            // services.AddSingleton<IRepository, Repository>();
-
-            // sempre gerara uma nova instancia para cada item encontrado que possua tal dependencia
-            // cria o objeto a cada solicitacao
-            //services.AddTransient<IRepository, Repository>();
-
-            //renova instancias somente em novas requisicoes, 
-            services.AddScoped<IRepository, Repository>();
-
             services.AddControllers()
                 .AddNewtonsoftJson(
                     opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
                 );
+
+            // dependece injection para o automapper
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            //renova instancias somente em novas requisicoes, 
+            services.AddScoped<IRepository, Repository>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
