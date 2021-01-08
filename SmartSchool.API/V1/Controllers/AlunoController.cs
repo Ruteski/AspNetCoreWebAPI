@@ -4,6 +4,8 @@ using SmartSchool.API.Data;
 using SmartSchool.API.V1.Dtos;
 using SmartSchool.API.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using SmartSchool.API.Helpers;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -36,11 +38,14 @@ namespace SmartSchool.API.V1.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get([FromQuery]PageParams pageParams)
         {
-            var alunos = _repo.GetAllAlunos(true);
-            
-            return Ok(_mapper.Map<IEnumerable<AlunoDto>>(alunos));
+            var alunos = await _repo.GetAllAlunosAsync(pageParams, true);
+            var alunosResult = _mapper.Map<IEnumerable<AlunoDto>>(alunos);
+
+            Response.AddPagination(alunos.CurrentPage, alunos.PageSize, alunos.TotalCount, alunos.TotalPages);
+
+            return Ok(alunosResult);
         }
 
         /// <summary>

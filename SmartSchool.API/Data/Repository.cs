@@ -1,6 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SmartSchool.API.Helpers;
 using SmartSchool.API.Models;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SmartSchool.API.Data
 {
@@ -35,6 +38,42 @@ namespace SmartSchool.API.Data
 
         //Alunos e Professores
 
+        public async Task<PageList<Aluno>> GetAllAlunosAsync(PageParams pageParams, bool includeProfessor = false)
+        {
+            IQueryable<Aluno> query = _context.Alunos;
+
+            if (includeProfessor)
+            {
+                query = query.Include(a => a.AlunosDisciplinas)
+                    .ThenInclude(ad => ad.Disciplina)
+                    .ThenInclude(d => d.Professor);
+            }
+
+            // ordena por nome
+            query = query.AsNoTracking()
+                .OrderBy(c => c.Id);
+
+            if (!string.IsNullOrEmpty(pageParams.Nome))
+            {
+                query = query.Where(aluno => aluno.Nome.ToUpper().Contains(pageParams.Nome.ToUpper()) || 
+                                             aluno.Sobrenome.ToUpper().Contains(pageParams.Nome.ToUpper()));
+            }
+
+            if (pageParams.Matricula > 0)
+            {
+                query = query.Where(aluno => aluno.Matricula == pageParams.Matricula);
+            }
+
+            if (pageParams.Ativo != null)
+            {
+                query = query.Where(aluno => aluno.Ativo == (pageParams.Ativo != 0));
+            }
+
+            //return await query.ToListAsync();
+            return await PageList<Aluno>.CreateAsync(query, pageParams.PageNumber, pageParams.PageSize);
+        }       
+        
+        
         public Aluno[] GetAllAlunos(bool includeProfessor = false)
         {
             IQueryable<Aluno> query = _context.Alunos;
@@ -150,3 +189,4 @@ namespace SmartSchool.API.Data
         }
     }
 }
+
