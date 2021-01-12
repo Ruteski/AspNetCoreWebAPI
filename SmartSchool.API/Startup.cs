@@ -14,113 +14,115 @@ using System.Reflection;
 
 namespace SmartSchool.API
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    public class Startup
-    {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+   /// <summary>
+   /// 
+   /// </summary>
+   public class Startup
+   {
+      public Startup(IConfiguration configuration)
+      {
+         Configuration = configuration;
+      }
 
-        public IConfiguration Configuration { get; }
+      public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            // context da aplicacao e qual a conexao com o banco vai usar
-            services.AddDbContext<DataContext>(
-                context => context.UseSqlite(Configuration.GetConnectionString("Default"))
-            );
+      // This method gets called by the runtime. Use this method to add services to the container.
+      public void ConfigureServices(IServiceCollection services)
+      {
+         // context da aplicacao e qual a conexao com o banco vai usar
+         services.AddDbContext<DataContext>(
+             context => context.UseMySql(Configuration.GetConnectionString("MySqlConnection"))
+         );
 
-            services.AddControllers()
-                .AddNewtonsoftJson(
-                    opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-                );
+         services.AddControllers()
+             .AddNewtonsoftJson(
+                 opt => opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+             );
 
-            // dependece injection para o automapper
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+         // dependece injection para o automapper
+         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            //renova instancias somente em novas requisicoes, 
-            services.AddScoped<IRepository, Repository>();
+         //renova instancias somente em novas requisicoes, 
+         services.AddScoped<IRepository, Repository>();
 
-            services.AddVersionedApiExplorer(options => {
-                options.GroupNameFormat = "'v'VVV";
-                options.SubstituteApiVersionInUrl = true;
-            })
-            .AddApiVersioning(options => {
-                options.AssumeDefaultVersionWhenUnspecified = true;
-                options.DefaultApiVersion = new ApiVersion(1, 0);
-                options.ReportApiVersions = true;
-            });
+         services.AddVersionedApiExplorer(options =>
+         {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+         })
+         .AddApiVersioning(options =>
+         {
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.ReportApiVersions = true;
+         });
 
-            var apiProviderDescription = services.BuildServiceProvider()
-                .GetService<IApiVersionDescriptionProvider>();
+         var apiProviderDescription = services.BuildServiceProvider()
+             .GetService<IApiVersionDescriptionProvider>();
 
-            services.AddSwaggerGen(options =>
+         services.AddSwaggerGen(options =>
+         {
+            foreach (var description in apiProviderDescription.ApiVersionDescriptions)
             {
-                foreach (var description in apiProviderDescription.ApiVersionDescriptions)
-                {
-                    options.SwaggerDoc(
-                        description.GroupName,
-                        new Microsoft.OpenApi.Models.OpenApiInfo()
+               options.SwaggerDoc(
+                      description.GroupName,
+                      new Microsoft.OpenApi.Models.OpenApiInfo()
+                     {
+                        Title = "SmartSchool API",
+                        Version = description.ApiVersion.ToString(),
+                        TermsOfService = new Uri("http://MeuTermoDeUso.com"),
+                        Description = "A descriï¿½ï¿½o da WebAPI do SmartSchool",
+                        License = new Microsoft.OpenApi.Models.OpenApiLicense
                         {
-                            Title = "SmartSchool API",
-                            Version = description.ApiVersion.ToString(),
-                            TermsOfService = new Uri("http://MeuTermoDeUso.com"),
-                            Description = "A descrição da WebAPI do SmartSchool",
-                            License = new Microsoft.OpenApi.Models.OpenApiLicense
-                            {
-                                Name = "SmartSchool License",
-                                Url = new Uri("http://mit.com")
-                            },
-                            Contact = new Microsoft.OpenApi.Models.OpenApiContact
-                            {
-                                Name = "Lincoln Ruteski",
-                                Email = "lruteski@gmail.com",
-                                Url = new Uri("http://lruteski.com.br")
-                            }
+                           Name = "SmartSchool License",
+                           Url = new Uri("http://mit.com")
+                        },
+                        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+                        {
+                           Name = "Lincoln Ruteski",
+                           Email = "lruteski@gmail.com",
+                           Url = new Uri("http://lruteski.com.br")
                         }
-                    );
-                }
-
-
-
-                var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
-
-                options.IncludeXmlComments(xmlCommentsFullPath);
-            });
-        }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider apiProviderDescription)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
+                     }
+                  );
             }
 
-            app.UseRouting();
 
-            app.UseSwagger()
-                .UseSwaggerUI(options =>
+
+            var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
+
+            options.IncludeXmlComments(xmlCommentsFullPath);
+         });
+      }
+
+      // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+      public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider apiProviderDescription)
+      {
+         if (env.IsDevelopment())
+         {
+            app.UseDeveloperExceptionPage();
+         }
+
+         app.UseRouting();
+
+         app.UseSwagger()
+             .UseSwaggerUI(options =>
+             {
+                foreach (var description in apiProviderDescription.ApiVersionDescriptions)
                 {
-                    foreach (var description in apiProviderDescription.ApiVersionDescriptions)
-                    {
-                        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
-                    }
-                    
-                    options.RoutePrefix = "";
-                });
+                   options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                }
 
-            // app.UseAuthorization();
+                options.RoutePrefix = "";
+             });
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-        }
-    }
+         // app.UseAuthorization();
+
+         app.UseEndpoints(endpoints =>
+         {
+            endpoints.MapControllers();
+         });
+      }
+   }
 }
